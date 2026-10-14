@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { takePendingAsk } from '@/lib/actions';
 import { api, refreshAll } from '@/lib/api';
 import type { ChatData, ChatReply, Conversation } from '@/lib/types';
 import { Markdown } from '@/ui/chat/Markdown';
@@ -81,7 +82,10 @@ export default function Chat() {
   useEffect(() => {
     if (msgs === null || asked.current) return;
     asked.current = true;
-    if (typeof q === 'string' && q.trim()) send(q);
+    // Questions from the app's own buttons are sent; a ?q= from a link only fills the box.
+    const pending = takePendingAsk();
+    if (pending?.trim()) send(pending);
+    else if (typeof q === 'string' && q.trim()) setInput(q.slice(0, 2000));
   }, [msgs, q, send]);
 
   const submit = () => {

@@ -4,9 +4,23 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { api, apiServer, refreshAll } from './api';
 
-/** Opens the conversation with liu liu, optionally sending a question right away (the web's askLiu). */
+let pendingAsk: string | null = null;
+
+/**
+ * Opens the conversation with liu liu, optionally sending a question right away (the web's askLiu).
+ * The question stays in memory, not in the URL: a liuliu://chat?q=… link from outside the app must
+ * never send a message by itself (the chat can record spending and recategorize).
+ */
 export function askLiu(q?: string) {
-  router.push(q ? { pathname: '/chat', params: { q } } : '/chat');
+  pendingAsk = q ?? null;
+  router.push('/chat');
+}
+
+/** The question askLiu() left for the chat, handed over once. */
+export function takePendingAsk() {
+  const q = pendingAsk;
+  pendingAsk = null;
+  return q;
 }
 
 type ConnectState = { step: 'idle' } | { step: 'opening' } | { step: 'importing'; bank: string } | { step: 'done'; text: string } | { step: 'error'; text: string };
